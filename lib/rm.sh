@@ -50,18 +50,9 @@ _bs_rm() {
   local confirm_msg="Remove branch space '$branch'?"
   [[ "$has_warnings" == true ]] && confirm_msg="Remove branch space '$branch' despite warnings?"
 
-  if command -v gum >/dev/null 2>&1; then
-    if ! gum confirm "$confirm_msg"; then
-      echo "Aborted"
-      return 1
-    fi
-  else
-    printf "%s [y/N] " "$confirm_msg"
-    read -r confirm
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-      echo "Aborted"
-      return 1
-    fi
+  if ! gum confirm "$confirm_msg"; then
+    echo "Aborted"
+    return 1
   fi
 
   # Get source to cd to after deletion

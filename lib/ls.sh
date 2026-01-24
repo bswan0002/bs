@@ -78,7 +78,7 @@ _bs_pick() {
       return 0
     fi
 
-    repo="$(echo "$projects" | fzf --height=20 --prompt='Select project: ')"
+    repo="$(echo "$projects" | gum filter --height=15 --placeholder="Type to filter..." --header="Select project:")"
     if [[ -z "$repo" ]]; then
       return 0
     fi
@@ -129,42 +129,29 @@ _bs_pick() {
     return 0
   fi
 
-  # Run fzf with formatted display
-  local selection; selection="$(
-    echo "$options" |
-      awk -F'|' '{printf "%-30s │ %-25s │ %-5s │ %s\n", $1, $3, $4, $5}' |
-      fzf \
-        --height=20 \
-        --prompt="$repo > " \
-        --print-query \
-        --header="BRANCH                         │ DESCRIPTION               │ AGE   │ STATUS"
-  )"
+  # Build display lines using awk (avoids IFS issues in zsh)
+  local display_lines
+  display_lines="$(echo "$options" | awk -F'|' '{printf "%-30s │ %-25s │ %-5s │ %s\n", $1, $3, $4, $5}')"
 
-  # Parse fzf output (first line is query, rest is selection)
-  local query selected_line
-  query="$(echo "$selection" | head -1)"
-  selected_line="$(echo "$selection" | tail -n +2 | head -1)"
+  # Add create option
+  local create_option="[+] Create new branch space..."
+  display_lines+=$'\n'"$create_option"
 
-  # If nothing selected but query entered, offer to create
-  if [[ -z "$selected_line" && -n "$query" ]]; then
-    # Check it's not an existing branch
-    if ! _bs_branch_exists "$repo" "$query"; then
-      if command -v gum >/dev/null 2>&1; then
-        if gum confirm "Create new branch space '$query'?"; then
-          _bs_new "$query"
-        fi
-      else
-        printf "Create new branch space '%s'? [y/N] " "$query"
-        read -r confirm
-        if [[ "$confirm" =~ ^[Yy]$ ]]; then
-          _bs_new "$query"
-        fi
-      fi
+  # Run gum filter
+  local selected_line
+  selected_line="$(echo "$display_lines" | gum filter --height=15 --placeholder="Type to search..." --header="BRANCH                         │ DESCRIPTION               │ AGE   │ STATUS")"
+
+  [[ -z "$selected_line" ]] && return 0
+
+  # Handle create option
+  if [[ "$selected_line" == "$create_option" ]]; then
+    local new_branch
+    new_branch="$(gum input --placeholder "Enter new branch name")"
+    if [[ -n "$new_branch" ]]; then
+      _bs_new "$new_branch"
     fi
     return 0
   fi
-
-  [[ -z "$selected_line" ]] && return 0
 
   # Extract branch name from selection (first column, trimmed)
   local selected_branch; selected_branch="$(echo "$selected_line" | cut -d'│' -f1 | xargs)"

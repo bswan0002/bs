@@ -81,18 +81,9 @@ _bs_gc() {
   echo ""
 
   # Confirm
-  if command -v gum >/dev/null 2>&1; then
-    if ! gum confirm "Remove these branch spaces?"; then
-      echo "Aborted"
-      return 0
-    fi
-  else
-    printf "Remove these branch spaces? [y/N] "
-    read -r confirm
-    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-      echo "Aborted"
-      return 0
-    fi
+  if ! gum confirm "Remove these branch spaces?"; then
+    echo "Aborted"
+    return 0
   fi
 
   # Check if we're currently in one of the candidates

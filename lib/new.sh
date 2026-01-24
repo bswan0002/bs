@@ -66,14 +66,10 @@ _bs_new() {
 
   # Select base branch if needed and not provided
   if [[ "$branch_exists_on_origin" == false && -z "$base_branch" ]]; then
-    base_branch="$(
-      git -C "$source_root" branch -r --format='%(refname:short)' |
-        sed 's|^origin/||' |
-        fzf \
-          --height=20 \
-          --prompt='Select base branch: ' \
-          --query="$current_branch"
-    )"
+    local branches
+    branches="$(git -C "$source_root" branch -r --format='%(refname:short)' | sed 's|^origin/||')"
+
+    base_branch="$(echo "$branches" | gum filter --height=15 --placeholder="Type to filter..." --header="Select base branch:")"
 
     if [[ -z "$base_branch" ]]; then
       echo "Aborted"
@@ -83,12 +79,7 @@ _bs_new() {
 
   # Prompt for description
   local desc=""
-  if command -v gum >/dev/null 2>&1; then
-    desc="$(gum input --placeholder "Description (optional, enter to skip)")" || true
-  else
-    printf "Description (optional): "
-    read -r desc
-  fi
+  desc="$(gum input --placeholder "Description (optional, enter to skip)")" || true
 
   # Create clone path
   local clone_path; clone_path="$(_bs_clone_path "$repo_name" "$branch")"
@@ -128,15 +119,14 @@ _bs_new() {
   if [[ -f "$config_file" ]]; then
     echo "Loading .bsconfig..."
 
-    # Copy specified files/dirs
-    while IFS='= ' read -r key value; do
-      # Skip empty lines and comments
-      [[ -z "$key" || "$key" == \#* ]] && continue
+    # Copy specified files/dirs (use grep/cut to avoid IFS issues in zsh)
+    grep -E '^copy\s*=' "$config_file" 2>/dev/null | while read -r line; do
+      local value="${line#*=}"
       # Trim whitespace
       value="${value#"${value%%[![:space:]]*}"}"
       value="${value%"${value##*[![:space:]]}"}"
 
-      if [[ "$key" == "copy" && -n "$value" ]]; then
+      if [[ -n "$value" ]]; then
         local src="$source_root/$value"
         if [[ -e "$src" ]]; then
           local dest_dir; dest_dir="$(dirname "$value")"
@@ -147,7 +137,7 @@ _bs_new() {
           echo "  Warning: $value not found, skipping"
         fi
       fi
-    done < "$config_file"
+    done
 
     # Run post command
     local postcmd; postcmd="$(grep -E '^postcmd[[:space:]]*=' "$config_file" | head -1 | cut -d'=' -f2-)"

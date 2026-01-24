@@ -6,7 +6,11 @@
 
 # BS_DIR should be set before sourcing, or we try to detect it
 if [[ -z "$BS_DIR" ]]; then
-  if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  if [[ -n "$ZSH_VERSION" ]]; then
+    # Zsh: %x gives the sourced script path
+    BS_DIR="${0:A:h}"
+  elif [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    # Bash
     BS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   else
     echo "bs: error: set BS_DIR before sourcing bs.sh"
@@ -23,6 +27,17 @@ source "$BS_DIR/lib/gc.sh"
 source "$BS_DIR/lib/desc.sh"
 
 bs() {
+  # Check required dependencies
+  if ! command -v gum >/dev/null 2>&1; then
+    echo "bs: error: gum is required but not installed"
+    echo ""
+    echo "Install gum:"
+    echo "  macOS/Linux:  brew install gum"
+    echo "  Arch Linux:   pacman -S gum"
+    echo "  More info:    https://github.com/charmbracelet/gum"
+    return 1
+  fi
+
   local cmd="${1:-}"
 
   case "$cmd" in
@@ -93,7 +108,7 @@ Configuration:
     copy = .claude
     postcmd = yarn install
 
-Dependencies: fzf, gum (optional, for prettier prompts)
+Dependencies: gum (https://github.com/charmbracelet/gum)
 EOF
 }
 
