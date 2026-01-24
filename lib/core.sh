@@ -185,16 +185,23 @@ _bs_format_age() {
   local now; now="$(date +%s)"
   local then
 
+  # Strip trailing Z for proper UTC parsing
+  local stripped="${created%Z}"
+
   # macOS date vs GNU date
   if date -j >/dev/null 2>&1; then
-    then="$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null)" || then="$now"
+    # macOS: parse with TZ=UTC to treat time as UTC
+    then="$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%S" "$stripped" +%s 2>/dev/null)" || then="$now"
   else
     then="$(date -d "$created" +%s 2>/dev/null)" || then="$now"
   fi
 
   local diff=$((now - then))
 
-  if ((diff < 3600)); then
+  # Handle edge cases: negative or very small values
+  if ((diff < 0)) || ((diff < 60)); then
+    echo "now"
+  elif ((diff < 3600)); then
     echo "$((diff / 60))m"
   elif ((diff < 86400)); then
     echo "$((diff / 3600))h"

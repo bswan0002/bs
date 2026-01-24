@@ -1,6 +1,6 @@
 # ls.sh — bs ls and bs (no args) commands
 
-# Non-interactive list
+# Non-interactive list with gum table
 _bs_ls() {
   _bs_detect_context
 
@@ -21,21 +21,20 @@ _bs_ls() {
     return 0
   fi
 
-  echo "Branch spaces for $repo:"
-  echo ""
-
-  # Header
-  printf "  %-30s %-30s %-6s %s\n" "BRANCH" "DESCRIPTION" "AGE" "STATUS"
-  printf "  %-30s %-30s %-6s %s\n" "------" "-----------" "---" "------"
+  # Build CSV data for gum table
+  local data="BRANCH,DESCRIPTION,AGE,STATUS"
 
   # Show main repo if source exists
   if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
     local main_status; main_status="$(_bs_get_status "$BS_SOURCE")"
-    printf "  %-30s %-30s %-6s %s\n" "main (source)" "" "" "$main_status"
+    data+=$'\n'"main (source),,,$main_status"
   fi
 
   # List branch spaces
   for sanitized_branch in $(_bs_list_branches "$repo"); do
+    # Skip entries containing = (stale shell state)
+    [[ "$sanitized_branch" == *"="* ]] && continue
+
     local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
     local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
@@ -54,12 +53,19 @@ _bs_ls() {
     local git_status=""
     [[ -d "$clone_path" ]] && git_status="$(_bs_get_status "$clone_path")"
 
-    # Truncate long values
-    local display_branch="${branch:0:28}"
-    local display_desc="${desc:0:28}"
+    # Truncate long values for display
+    local display_branch="${branch:0:26}"
+    local display_desc="${desc:0:16}"
 
-    printf "  %-30s %-30s %-6s %s\n" "$display_branch" "$display_desc" "$age" "$git_status"
+    data+=$'\n'"$display_branch,$display_desc,$age,$git_status"
   done
+
+  # Render with gum table
+  echo "$data" | gum table \
+    --separator="," \
+    --border="rounded" \
+    --header.foreground="99" \
+    --print
 }
 
 # Interactive picker (bs with no args)
@@ -67,10 +73,13 @@ _bs_pick() {
   _bs_detect_context
 
   local repo="$BS_REPO"
+  local projects project_meta options line main_status
+  local branch clone_path meta desc created age git_status
+  local display_branch display_desc selected target_path new_branch
 
   # If no context, pick project first
   if [[ -z "$repo" ]]; then
-    local projects; projects="$(_bs_list_projects)"
+    projects="$(_bs_list_projects)"
 
     if [[ -z "$projects" ]]; then
       echo "No bs-managed projects found."
@@ -84,44 +93,59 @@ _bs_pick() {
     fi
 
     # Load project meta for source
-    local project_meta="$BS_META/$repo/_project.json"
+    project_meta="$BS_META/$repo/_project.json"
     if [[ -f "$project_meta" ]]; then
       BS_SOURCE="$(grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_meta" | cut -d'"' -f4)"
     fi
   fi
 
-  # Build picker options
-  local options=""
+  # Build picker options: "formatted_display|path"
+  options=""
 
   # Add main repo option
   if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
-    local main_status; main_status="$(_bs_get_status "$BS_SOURCE")"
-    options="main (source)|${BS_SOURCE}||${main_status}"
+    main_status="$(_bs_get_status "$BS_SOURCE")"
+    line="$(printf "%-28s  %-18s  %-5s  %s" "main (source)" "" "" "$main_status")"
+    options="$line|$BS_SOURCE"
   fi
 
   # Add branch spaces
   for sanitized_branch in $(_bs_list_branches "$repo"); do
-    local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
+    # Skip entries containing = (stale shell state)
+    [[ "$sanitized_branch" == *"="* ]] && continue
 
-    local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    clone_path="$(_bs_clone_path "$repo" "$branch")"
 
-    local desc=""
-    local created=""
+    meta="$(_bs_get_branch_meta "$repo" "$branch")"
+
+    desc=""
+    created=""
     if [[ -n "$meta" ]]; then
       desc="$(echo "$meta" | grep -o '"desc"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)"
       created="$(echo "$meta" | grep -o '"created"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)"
     fi
 
-    local age=""
+    age=""
     [[ -n "$created" ]] && age="$(_bs_format_age "$created")"
 
-    local git_status=""
+    git_status=""
     [[ -d "$clone_path" ]] && git_status="$(_bs_get_status "$clone_path")"
 
+    # Truncate long values for display
+    display_branch="${branch:0:26}"
+    display_desc="${desc:0:16}"
+
+    line="$(printf "%-28s  %-18s  %-5s  %s" "$display_branch" "$display_desc" "$age" "$git_status")"
+
     [[ -n "$options" ]] && options+=$'\n'
-    options+="${branch}|${clone_path}|${desc}|${age}|${git_status}"
+    options+="$line|$clone_path"
   done
+
+  # Add create option at the end
+  line="$(printf "%-28s" "[+] Create new branch...")"
+  [[ -n "$options" ]] && options+=$'\n'
+  options+="$line|__CREATE__"
 
   if [[ -z "$options" ]]; then
     echo "No branch spaces for $repo."
@@ -129,49 +153,29 @@ _bs_pick() {
     return 0
   fi
 
-  # Build display lines using awk (avoids IFS issues in zsh)
-  local display_lines
-  display_lines="$(echo "$options" | awk -F'|' '{printf "%-30s │ %-25s │ %-5s │ %s\n", $1, $3, $4, $5}')"
+  # Run gum filter with styled header
+  selected="$(echo "$options" | cut -d'|' -f1 | gum filter \
+    --height=15 \
+    --header="BRANCH                        DESCRIPTION         AGE    STATUS" \
+    --placeholder="Type to search..." \
+    --indicator.foreground="212")"
 
-  # Add create option
-  local create_option="[+] Create new branch space..."
-  display_lines+=$'\n'"$create_option"
+  [[ -z "$selected" ]] && return 0
 
-  # Run gum filter
-  local selected_line
-  selected_line="$(echo "$display_lines" | gum filter --height=15 --placeholder="Type to search..." --header="BRANCH                         │ DESCRIPTION               │ AGE   │ STATUS")"
+  # Match selection back to target path
+  target_path="$(echo "$options" | grep -F "$selected" | head -1 | cut -d'|' -f2)"
 
-  [[ -z "$selected_line" ]] && return 0
-
-  # Handle create option
-  if [[ "$selected_line" == "$create_option" ]]; then
-    local new_branch
-    new_branch="$(gum input --placeholder "Enter new branch name")"
-    if [[ -n "$new_branch" ]]; then
-      _bs_new "$new_branch"
-    fi
-    return 0
-  fi
-
-  # Extract branch name from selection (first column, trimmed)
-  local selected_branch; selected_branch="$(echo "$selected_line" | cut -d'│' -f1 | xargs)"
-
-  # Handle main repo selection
-  if [[ "$selected_branch" == "main (source)" ]]; then
-    if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
-      cd "$BS_SOURCE"
-      echo "Switched to main repo: $BS_SOURCE"
-    fi
-    return 0
-  fi
-
-  # cd to selected branch space
-  local clone_path; clone_path="$(_bs_clone_path "$repo" "$selected_branch")"
-  if [[ -d "$clone_path" ]]; then
-    cd "$clone_path"
-    echo "Switched to branch space: $selected_branch"
-  else
-    echo "Error: clone path not found: $clone_path"
-    return 1
-  fi
+  # Handle selection
+  case "$target_path" in
+    __CREATE__)
+      new_branch="$(gum input --placeholder "Enter new branch name")"
+      [[ -n "$new_branch" ]] && _bs_new "$new_branch"
+      ;;
+    *)
+      if [[ -d "$target_path" ]]; then
+        cd "$target_path"
+        echo "Switched to: $target_path"
+      fi
+      ;;
+  esac
 }
