@@ -87,7 +87,7 @@ _bs_gc() {
   echo ""
 
   # Confirm
-  if command -v gum &>/dev/null; then
+  if command -v gum >/dev/null 2>&1; then
     if ! gum confirm "Remove these branch spaces?"; then
       echo "Aborted"
       return 0

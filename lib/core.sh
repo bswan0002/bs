@@ -55,7 +55,7 @@ _bs_detect_context() {
   fi
 
   # Check if we're in a git repo
-  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     return 0
   fi
 
@@ -196,7 +196,7 @@ _bs_format_age() {
   local then
 
   # macOS date vs GNU date
-  if date -j &>/dev/null 2>&1; then
+  if date -j >/dev/null 2>&1; then
     then="$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null)" || then="$now"
   else
     then="$(date -d "$created" +%s 2>/dev/null)" || then="$now"

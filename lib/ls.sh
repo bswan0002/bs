@@ -159,7 +159,7 @@ _bs_pick() {
   if [[ -z "$selected_line" && -n "$query" ]]; then
     # Check it's not an existing branch
     if ! _bs_branch_exists "$repo" "$query"; then
-      if command -v gum &>/dev/null; then
+      if command -v gum >/dev/null 2>&1; then
         if gum confirm "Create new branch space '$query'?"; then
           _bs_new "$query"
         fi

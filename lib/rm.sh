@@ -53,7 +53,7 @@ _bs_rm() {
   local confirm_msg="Remove branch space '$branch'?"
   [[ "$has_warnings" == true ]] && confirm_msg="Remove branch space '$branch' despite warnings?"
 
-  if command -v gum &>/dev/null; then
+  if command -v gum >/dev/null 2>&1; then
     if ! gum confirm "$confirm_msg"; then
       echo "Aborted"
       return 1

@@ -4,7 +4,12 @@
 # Source this file from your shell rc:
 #   source ~/dev/bs/bs.sh
 
-BS_DIR="${BS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+# Get script directory (works in both bash and zsh)
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  BS_DIR="${BS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+else
+  BS_DIR="${BS_DIR:-$(cd "$(dirname "$0")" && pwd)}"
+fi
 
 # Load libraries
 source "$BS_DIR/lib/core.sh"
