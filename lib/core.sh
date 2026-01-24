@@ -176,7 +176,7 @@ _bs_clone_path() {
   local branch="$2"
   local sanitized
   sanitized="$(_bs_sanitize_branch "$branch")"
-  echo "$BS_CLONES/$repo/$sanitized"
+  echo "$BS_CLONES/$repo/$repo-$sanitized"
 }
 
 # Check if a branch space exists
