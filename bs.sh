@@ -4,11 +4,14 @@
 # Source this file from your shell rc:
 #   source ~/dev/bs/bs.sh
 
-# Get script directory (works in both bash and zsh)
-if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
-  BS_DIR="${BS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-else
-  BS_DIR="${BS_DIR:-$(cd "$(dirname "$0")" && pwd)}"
+# BS_DIR should be set before sourcing, or we try to detect it
+if [[ -z "$BS_DIR" ]]; then
+  if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    BS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  else
+    echo "bs: error: set BS_DIR before sourcing bs.sh"
+    return 1
+  fi
 fi
 
 # Load libraries
@@ -43,7 +46,13 @@ bs() {
       shift
       _bs_desc "$@"
       ;;
-    help|--help|-h)
+    help)
+      _bs_help
+      ;;
+    '--help')
+      _bs_help
+      ;;
+    '-h')
       _bs_help
       ;;
     "")
