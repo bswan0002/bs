@@ -30,20 +30,16 @@ _bs_ls() {
 
   # Show main repo if source exists
   if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
-    local main_status
-    main_status="$(_bs_get_status "$BS_SOURCE")"
+    local main_status; main_status="$(_bs_get_status "$BS_SOURCE")"
     printf "  %-30s %-30s %-6s %s\n" "main (source)" "" "" "$main_status"
   fi
 
   # List branch spaces
   for sanitized_branch in $(_bs_list_branches "$repo"); do
-    local branch
-    branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    local clone_path
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
-    local meta
-    meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
 
     local desc=""
     local created=""
@@ -55,14 +51,14 @@ _bs_ls() {
     local age=""
     [[ -n "$created" ]] && age="$(_bs_format_age "$created")"
 
-    local status=""
-    [[ -d "$clone_path" ]] && status="$(_bs_get_status "$clone_path")"
+    local git_status=""
+    [[ -d "$clone_path" ]] && git_status="$(_bs_get_status "$clone_path")"
 
     # Truncate long values
     local display_branch="${branch:0:28}"
     local display_desc="${desc:0:28}"
 
-    printf "  %-30s %-30s %-6s %s\n" "$display_branch" "$display_desc" "$age" "$status"
+    printf "  %-30s %-30s %-6s %s\n" "$display_branch" "$display_desc" "$age" "$git_status"
   done
 }
 
@@ -74,8 +70,7 @@ _bs_pick() {
 
   # If no context, pick project first
   if [[ -z "$repo" ]]; then
-    local projects
-    projects="$(_bs_list_projects)"
+    local projects; projects="$(_bs_list_projects)"
 
     if [[ -z "$projects" ]]; then
       echo "No bs-managed projects found."
@@ -100,20 +95,16 @@ _bs_pick() {
 
   # Add main repo option
   if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
-    local main_status
-    main_status="$(_bs_get_status "$BS_SOURCE")"
+    local main_status; main_status="$(_bs_get_status "$BS_SOURCE")"
     options="main (source)|${BS_SOURCE}||${main_status}"
   fi
 
   # Add branch spaces
   for sanitized_branch in $(_bs_list_branches "$repo"); do
-    local branch
-    branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    local clone_path
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
-    local meta
-    meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
 
     local desc=""
     local created=""
@@ -125,11 +116,11 @@ _bs_pick() {
     local age=""
     [[ -n "$created" ]] && age="$(_bs_format_age "$created")"
 
-    local status=""
-    [[ -d "$clone_path" ]] && status="$(_bs_get_status "$clone_path")"
+    local git_status=""
+    [[ -d "$clone_path" ]] && git_status="$(_bs_get_status "$clone_path")"
 
     [[ -n "$options" ]] && options+=$'\n'
-    options+="${branch}|${clone_path}|${desc}|${age}|${status}"
+    options+="${branch}|${clone_path}|${desc}|${age}|${git_status}"
   done
 
   if [[ -z "$options" ]]; then
@@ -139,8 +130,7 @@ _bs_pick() {
   fi
 
   # Run fzf with formatted display
-  local selection
-  selection="$(
+  local selection; selection="$(
     echo "$options" |
       awk -F'|' '{printf "%-30s │ %-25s │ %-5s │ %s\n", $1, $3, $4, $5}' |
       fzf \
@@ -177,8 +167,7 @@ _bs_pick() {
   [[ -z "$selected_line" ]] && return 0
 
   # Extract branch name from selection (first column, trimmed)
-  local selected_branch
-  selected_branch="$(echo "$selected_line" | cut -d'│' -f1 | xargs)"
+  local selected_branch; selected_branch="$(echo "$selected_line" | cut -d'│' -f1 | xargs)"
 
   # Handle main repo selection
   if [[ "$selected_branch" == "main (source)" ]]; then
@@ -190,8 +179,7 @@ _bs_pick() {
   fi
 
   # cd to selected branch space
-  local clone_path
-  clone_path="$(_bs_clone_path "$repo" "$selected_branch")"
+  local clone_path; clone_path="$(_bs_clone_path "$repo" "$selected_branch")"
   if [[ -d "$clone_path" ]]; then
     cd "$clone_path"
     echo "Switched to branch space: $selected_branch"

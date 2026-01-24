@@ -11,8 +11,7 @@ _bs_rm() {
 
   local repo="$BS_REPO"
   local branch="$BS_BRANCH"
-  local clone_path
-  clone_path="$(_bs_clone_path "$repo" "$(_bs_unsanitize_branch "$branch")")"
+  local clone_path; clone_path="$(_bs_clone_path "$repo" "$(_bs_unsanitize_branch "$branch")")"
 
   echo "Branch space: $branch"
   echo "Path: $clone_path"
@@ -30,8 +29,7 @@ _bs_rm() {
   fi
 
   # Unpushed commits
-  local unpushed
-  unpushed="$(git log --oneline @{upstream}..HEAD 2>/dev/null)"
+  local unpushed; unpushed="$(git log --oneline @{upstream}..HEAD 2>/dev/null)"
   if [[ -n "$unpushed" ]]; then
     has_warnings=true
     echo "Warning: unpushed commits:"
@@ -40,8 +38,7 @@ _bs_rm() {
   fi
 
   # Stashes
-  local stashes
-  stashes="$(git stash list 2>/dev/null)"
+  local stashes; stashes="$(git stash list 2>/dev/null)"
   if [[ -n "$stashes" ]]; then
     has_warnings=true
     echo "Warning: stashes:"

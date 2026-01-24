@@ -10,11 +10,9 @@ _bs_desc() {
   fi
 
   local repo="$BS_REPO"
-  local branch
-  branch="$(_bs_unsanitize_branch "$BS_BRANCH")"
+  local branch; branch="$(_bs_unsanitize_branch "$BS_BRANCH")"
 
-  local meta
-  meta="$(_bs_get_branch_meta "$repo" "$branch")"
+  local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
 
   if [[ -z "$1" ]]; then
     # Show current description
@@ -23,8 +21,7 @@ _bs_desc() {
       return 0
     fi
 
-    local desc
-    desc="$(echo "$meta" | grep -o '"desc"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)"
+    local desc; desc="$(echo "$meta" | grep -o '"desc"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)"
 
     if [[ -z "$desc" ]]; then
       echo "(no description)"

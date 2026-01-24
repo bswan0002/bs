@@ -28,10 +28,8 @@ _bs_gc() {
   local candidate_reasons=()
 
   for sanitized_branch in $(_bs_list_branches "$repo"); do
-    local branch
-    branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    local clone_path
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
     local reason=""
 
@@ -41,13 +39,11 @@ _bs_gc() {
     else
       # Check if branch is merged (into any branch)
       # A branch is "merged" if its HEAD commit is reachable from another branch
-      local branch_head
-      branch_head="$(git -C "$source" rev-parse "origin/$branch" 2>/dev/null)"
+      local branch_head; branch_head="$(git -C "$source" rev-parse "origin/$branch" 2>/dev/null)"
 
       if [[ -n "$branch_head" ]]; then
         # Check if this commit exists in any other branch
-        local merged_into
-        merged_into="$(git -C "$source" branch -r --contains "$branch_head" 2>/dev/null | grep -v "origin/$branch" | head -1 | xargs)"
+        local merged_into; merged_into="$(git -C "$source" branch -r --contains "$branch_head" 2>/dev/null | grep -v "origin/$branch" | head -1 | xargs)"
         if [[ -n "$merged_into" ]]; then
           reason="merged into ${merged_into#origin/}"
         fi
@@ -71,11 +67,9 @@ _bs_gc() {
   for i in "${!candidates[@]}"; do
     local branch="${candidates[$i]}"
     local reason="${candidate_reasons[$i]}"
-    local clone_path
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
-    local meta
-    meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
     local desc=""
     if [[ -n "$meta" ]]; then
       desc="$(echo "$meta" | grep -o '"desc"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)"
@@ -109,8 +103,7 @@ _bs_gc() {
 
   local need_cd=false
   for branch in "${candidates[@]}"; do
-    local sanitized
-    sanitized="$(_bs_sanitize_branch "$branch")"
+    local sanitized; sanitized="$(_bs_sanitize_branch "$branch")"
     if [[ "$sanitized" == "$current_clone" ]]; then
       need_cd=true
       break
@@ -123,8 +116,7 @@ _bs_gc() {
 
   # Remove candidates
   for branch in "${candidates[@]}"; do
-    local clone_path
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
 
     rm -rf "$clone_path"
     _bs_delete_branch_meta "$repo" "$branch"

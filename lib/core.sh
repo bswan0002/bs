@@ -21,8 +21,7 @@ _bs_unsanitize_branch() {
 
 # Get repo name from current git repo
 _bs_get_repo_name() {
-  local root
-  root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
+  local root; root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
   basename "$root"
 }
 
@@ -34,8 +33,7 @@ _bs_detect_context() {
   BS_BRANCH=""
   BS_SOURCE=""
 
-  local cwd
-  cwd="$(pwd)"
+  local cwd; cwd="$(pwd)"
 
   # Check if we're inside a branch space clone
   if [[ "$cwd" == "$BS_CLONES"/* ]]; then
@@ -59,8 +57,7 @@ _bs_detect_context() {
     return 0
   fi
 
-  local repo_name
-  repo_name="$(_bs_get_repo_name)"
+  local repo_name; repo_name="$(_bs_get_repo_name)"
 
   # Check if this repo is bs-managed (has project meta)
   local project_meta="$BS_META/$repo_name/_project.json"
@@ -112,8 +109,7 @@ EOF
 _bs_get_branch_meta() {
   local repo="$1"
   local branch="$2"
-  local sanitized
-  sanitized="$(_bs_sanitize_branch "$branch")"
+  local sanitized; sanitized="$(_bs_sanitize_branch "$branch")"
   local meta_file="$BS_META/$repo/${sanitized}.json"
   [[ -f "$meta_file" ]] && cat "$meta_file"
 }
@@ -124,8 +120,7 @@ _bs_set_branch_meta() {
   local branch="$2"
   local desc="$3"
   local base="$4"
-  local sanitized
-  sanitized="$(_bs_sanitize_branch "$branch")"
+  local sanitized; sanitized="$(_bs_sanitize_branch "$branch")"
   local meta_file="$BS_META/$repo/${sanitized}.json"
 
   mkdir -p "$BS_META/$repo"
@@ -142,8 +137,7 @@ EOF
 _bs_delete_branch_meta() {
   local repo="$1"
   local branch="$2"
-  local sanitized
-  sanitized="$(_bs_sanitize_branch "$branch")"
+  local sanitized; sanitized="$(_bs_sanitize_branch "$branch")"
   rm -f "$BS_META/$repo/${sanitized}.json"
 }
 
@@ -163,8 +157,7 @@ _bs_list_branches() {
 
   for f in "$meta_dir"/*.json; do
     [[ -f "$f" ]] || continue
-    local name
-    name="$(basename "$f" .json)"
+    local name; name="$(basename "$f" .json)"
     [[ "$name" == "_project" ]] && continue
     echo "$name"
   done
@@ -174,8 +167,7 @@ _bs_list_branches() {
 _bs_clone_path() {
   local repo="$1"
   local branch="$2"
-  local sanitized
-  sanitized="$(_bs_sanitize_branch "$branch")"
+  local sanitized; sanitized="$(_bs_sanitize_branch "$branch")"
   echo "$BS_CLONES/$repo/$repo-$sanitized"
 }
 
@@ -183,16 +175,14 @@ _bs_clone_path() {
 _bs_branch_exists() {
   local repo="$1"
   local branch="$2"
-  local clone_path
-  clone_path="$(_bs_clone_path "$repo" "$branch")"
+  local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
   [[ -d "$clone_path" ]]
 }
 
 # Format age from ISO date
 _bs_format_age() {
   local created="$1"
-  local now
-  now="$(date +%s)"
+  local now; now="$(date +%s)"
   local then
 
   # macOS date vs GNU date
@@ -221,20 +211,19 @@ _bs_get_status() {
 
   [[ -d "$clone_path" ]] || return
 
-  local status=""
+  local git_status=""
 
   # Check for dirty working tree
   if [[ -n "$(git -C "$clone_path" status --porcelain 2>/dev/null)" ]]; then
-    status+="dirty"
+    git_status+="dirty"
   fi
 
   # Check for unpushed commits
-  local ahead
-  ahead="$(git -C "$clone_path" rev-list --count @{upstream}..HEAD 2>/dev/null)"
+  local ahead; ahead="$(git -C "$clone_path" rev-list --count @{upstream}..HEAD 2>/dev/null)"
   if [[ -n "$ahead" && "$ahead" -gt 0 ]]; then
-    [[ -n "$status" ]] && status+=" "
-    status+="ahead:$ahead"
+    [[ -n "$git_status" ]] && git_status+=" "
+    git_status+="ahead:$ahead"
   fi
 
-  echo "$status"
+  echo "$git_status"
 }

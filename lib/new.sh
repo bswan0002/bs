@@ -45,8 +45,7 @@ _bs_new() {
   # Check if branch space already exists
   if _bs_branch_exists "$repo_name" "$branch"; then
     echo "Error: branch space '$branch' already exists for $repo_name"
-    local existing_path
-    existing_path="$(_bs_clone_path "$repo_name" "$branch")"
+    local existing_path; existing_path="$(_bs_clone_path "$repo_name" "$branch")"
     echo "  Path: $existing_path"
     return 1
   fi
@@ -63,8 +62,7 @@ _bs_new() {
   fi
 
   # Get current branch as default for base selection
-  local current_branch
-  current_branch="$(_bs_current_branch)"
+  local current_branch; current_branch="$(_bs_current_branch)"
 
   # Select base branch if needed and not provided
   if [[ "$branch_exists_on_origin" == false && -z "$base_branch" ]]; then
@@ -93,8 +91,7 @@ _bs_new() {
   fi
 
   # Create clone path
-  local clone_path
-  clone_path="$(_bs_clone_path "$repo_name" "$branch")"
+  local clone_path; clone_path="$(_bs_clone_path "$repo_name" "$branch")"
   mkdir -p "$(dirname "$clone_path")"
 
   echo "Creating branch space at $clone_path..."
@@ -142,8 +139,7 @@ _bs_new() {
       if [[ "$key" == "copy" && -n "$value" ]]; then
         local src="$source_root/$value"
         if [[ -e "$src" ]]; then
-          local dest_dir
-          dest_dir="$(dirname "$value")"
+          local dest_dir; dest_dir="$(dirname "$value")"
           [[ "$dest_dir" != "." ]] && mkdir -p "$dest_dir"
           cp -R "$src" "$value"
           echo "  Copied $value"
@@ -154,8 +150,7 @@ _bs_new() {
     done < "$config_file"
 
     # Run post command
-    local postcmd
-    postcmd="$(grep -E '^postcmd[[:space:]]*=' "$config_file" | head -1 | cut -d'=' -f2-)"
+    local postcmd; postcmd="$(grep -E '^postcmd[[:space:]]*=' "$config_file" | head -1 | cut -d'=' -f2-)"
     postcmd="${postcmd#"${postcmd%%[![:space:]]*}"}"
     if [[ -n "$postcmd" ]]; then
       echo "Running postcmd: $postcmd"
