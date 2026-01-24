@@ -164,7 +164,8 @@ _bs_pick() {
           _bs_new "$query"
         fi
       else
-        read -r -p "Create new branch space '$query'? [y/N] " confirm
+        printf "Create new branch space '%s'? [y/N] " "$query"
+        read -r confirm
         if [[ "$confirm" =~ ^[Yy]$ ]]; then
           _bs_new "$query"
         fi

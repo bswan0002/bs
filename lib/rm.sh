@@ -59,7 +59,8 @@ _bs_rm() {
       return 1
     fi
   else
-    read -r -p "$confirm_msg [y/N] " confirm
+    printf "%s [y/N] " "$confirm_msg"
+    read -r confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
       echo "Aborted"
       return 1

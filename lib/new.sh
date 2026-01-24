@@ -88,7 +88,8 @@ _bs_new() {
   if command -v gum >/dev/null 2>&1; then
     desc="$(gum input --placeholder "Description (optional, enter to skip)")" || true
   else
-    read -r -p "Description (optional): " desc
+    printf "Description (optional): "
+    read -r desc
   fi
 
   # Create clone path

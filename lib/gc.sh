@@ -93,7 +93,8 @@ _bs_gc() {
       return 0
     fi
   else
-    read -r -p "Remove these branch spaces? [y/N] " confirm
+    printf "Remove these branch spaces? [y/N] "
+    read -r confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
       echo "Aborted"
       return 0
