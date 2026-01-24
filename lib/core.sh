@@ -37,11 +37,13 @@ _bs_detect_context() {
 
   # Check if we're inside a branch space clone
   if [[ "$cwd" == "$BS_CLONES"/* ]]; then
-    # Parse: ~/.bs/clones/<repo>/<branch>/...
+    # Parse: ~/.bs/clones/<repo>/<repo>-<branch>/...
     local rel="${cwd#$BS_CLONES/}"
     BS_REPO="${rel%%/*}"
     rel="${rel#*/}"
-    BS_BRANCH="${rel%%/*}"
+    local dir_name="${rel%%/*}"
+    # Strip repo prefix from directory name to get branch
+    BS_BRANCH="${dir_name#$BS_REPO-}"
     BS_CONTEXT="clone"
 
     # Load source from project meta
