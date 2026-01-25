@@ -1,6 +1,6 @@
 # ls.sh — bs ls and bs (no args) commands
 
-# Non-interactive list with gum table
+# Non-interactive list
 _bs_ls() {
   _bs_detect_context
 
@@ -8,26 +8,25 @@ _bs_ls() {
 
   # If no context, show all projects
   if [[ -z "$repo" ]]; then
-    echo "All bs-managed projects:"
-    echo ""
+    gum style --foreground="99" "$(printf '%-20s  %s' 'PROJECT' 'SOURCE')"
     for proj in $(_bs_list_projects); do
       local source=""
       local project_meta="$BS_META/$proj/_project.json"
       if [[ -f "$project_meta" ]]; then
         source="$(grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' "$project_meta" | cut -d'"' -f4)"
       fi
-      printf "  %-20s %s\n" "$proj" "$source"
+      printf "%-20s  %s\n" "$proj" "$source"
     done
     return 0
   fi
 
-  # Build CSV data for gum table
-  local data="BRANCH,DESCRIPTION,AGE,STATUS"
+  # Print styled header
+  gum style --foreground="99" "$(printf '%-28s  %-18s  %-5s  %s' 'BRANCH' 'DESCRIPTION' 'AGE' 'STATUS')"
 
   # Show main repo if source exists
   if [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]]; then
     local main_status; main_status="$(_bs_get_status "$BS_SOURCE")"
-    data+=$'\n'"main (source),,,$main_status"
+    printf "%-28s  %-18s  %-5s  %s\n" "main (source)" "" "" "$main_status"
   fi
 
   # List branch spaces
@@ -56,15 +55,8 @@ _bs_ls() {
     local display_branch="${branch:0:26}"
     local display_desc="${desc:0:16}"
 
-    data+=$'\n'"$display_branch,$display_desc,$age,$git_status"
+    printf "%-28s  %-18s  %-5s  %s\n" "$display_branch" "$display_desc" "$age" "$git_status"
   done
-
-  # Render with gum table
-  echo "$data" | gum table \
-    --separator="," \
-    --border="rounded" \
-    --header.foreground="99" \
-    --print
 }
 
 # Interactive picker (bs with no args)
@@ -168,7 +160,11 @@ _bs_pick() {
   case "$target_path" in
     __CREATE__)
       new_branch="$(gum input --placeholder "Enter new branch name")"
-      [[ -n "$new_branch" ]] && _bs_new "$new_branch"
+      if [[ -n "$new_branch" ]]; then
+        # cd to source repo so _bs_new can detect context
+        [[ -n "$BS_SOURCE" && -d "$BS_SOURCE" ]] && cd "$BS_SOURCE"
+        _bs_new "$new_branch"
+      fi
       ;;
     *)
       if [[ -d "$target_path" ]]; then
