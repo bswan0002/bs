@@ -23,8 +23,7 @@ source ~/dev/bs/bs.sh
 ```
 
 Dependencies:
-- `fzf` — required for interactive selection
-- `gum` — optional, provides prettier confirmation prompts
+- `gum` — required for interactive selection and prompts (https://github.com/charmbracelet/gum)
 
 ## Usage
 
@@ -36,12 +35,12 @@ bs              # Pick a branch space to cd into
 
 When run from within a project, shows branch spaces for that project. Otherwise, shows all projects first.
 
-Typing a non-existent branch name and pressing enter will offer to create it.
+Select "[+] Create new branch..." at the bottom to create a new branch space.
 
 ### Create a branch space
 
 ```bash
-bs new CLDYFE-1234              # Create from current branch (fzf picker for base)
+bs new CLDYFE-1234              # Create from current branch (picker for base)
 bs new CLDYFE-1234 main         # Create from specific base branch
 ```
 
@@ -70,6 +69,15 @@ bs gc           # Find and remove branch spaces where the branch was merged/dele
 ```bash
 bs desc                     # Show current description
 bs desc "login refactor"    # Set description
+```
+
+### Switch projects
+
+```bash
+bs cd                       # Pick a project, then a branch space
+bs cd myproject             # Pick a branch space within myproject
+bs cd myproject feature-x   # Go directly to a specific branch space
+bs cd myproject main        # Go to the source repo for a project
 ```
 
 ## Configuration
