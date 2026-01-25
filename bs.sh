@@ -25,6 +25,7 @@ source "$BS_DIR/lib/ls.sh"
 source "$BS_DIR/lib/rm.sh"
 source "$BS_DIR/lib/gc.sh"
 source "$BS_DIR/lib/desc.sh"
+source "$BS_DIR/lib/cd.sh"
 
 bs() {
   # Check required dependencies
@@ -61,6 +62,10 @@ bs() {
       shift
       _bs_desc "$@"
       ;;
+    cd)
+      shift
+      _bs_cd "$@"
+      ;;
     help)
       _bs_help
       ;;
@@ -92,6 +97,7 @@ Usage:
   bs rm                 Remove current branch space
   bs gc                 Clean up merged/deleted branch spaces
   bs desc [text]        View or set description for current branch space
+  bs cd [project] [branch] Switch to project or branch space
 
 A "branch space" is an isolated clone of a repo tied to a branch,
 with its own node_modules, .env, etc. Unlike git worktrees, these
