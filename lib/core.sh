@@ -159,7 +159,7 @@ _bs_list_branches() {
 
   for f in "$meta_dir"/*.json; do
     [[ -f "$f" ]] || continue
-    local name; name="$(basename "$f" .json)"
+    local name="$(basename "$f" .json)"
     [[ "$name" == "_project" ]] && continue
     echo "$name"
   done

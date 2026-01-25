@@ -35,10 +35,9 @@ _bs_ls() {
     # Skip entries containing = (stale shell state)
     [[ "$sanitized_branch" == *"="* ]] && continue
 
-    local branch; branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    local clone_path; clone_path="$(_bs_clone_path "$repo" "$branch")"
-
-    local meta; meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    local branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    local clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local meta="$(_bs_get_branch_meta "$repo" "$branch")"
 
     local desc=""
     local created=""
@@ -114,10 +113,9 @@ _bs_pick() {
     # Skip entries containing = (stale shell state)
     [[ "$sanitized_branch" == *"="* ]] && continue
 
-    branch="$(_bs_unsanitize_branch "$sanitized_branch")"
-    clone_path="$(_bs_clone_path "$repo" "$branch")"
-
-    meta="$(_bs_get_branch_meta "$repo" "$branch")"
+    local branch="$(_bs_unsanitize_branch "$sanitized_branch")"
+    local clone_path="$(_bs_clone_path "$repo" "$branch")"
+    local meta="$(_bs_get_branch_meta "$repo" "$branch")"
 
     desc=""
     created=""
@@ -153,10 +151,11 @@ _bs_pick() {
     return 0
   fi
 
-  # Run gum filter with styled header
+  # Run gum filter with styled header (2-space prefix aligns with gum's bullet indent)
+  local header="  $(printf '%-28s  %-18s  %-5s  %s' 'BRANCH' 'DESCRIPTION' 'AGE' 'STATUS')"
   selected="$(echo "$options" | cut -d'|' -f1 | gum filter \
     --height=15 \
-    --header="BRANCH                        DESCRIPTION         AGE    STATUS" \
+    --header="$header" \
     --placeholder="Type to search..." \
     --indicator.foreground="212")"
 
