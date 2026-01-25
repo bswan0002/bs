@@ -154,22 +154,28 @@ _bs_new() {
     local postcmd=""
     local in_postcmd=false
     while IFS= read -r line || [[ -n "$line" ]]; do
+      echo "DEBUG line: [$line]"
       if [[ "$in_postcmd" == false && "$line" =~ ^postcmd[[:space:]]*= ]]; then
+        echo "DEBUG matched postcmd line"
         postcmd="${line#*=}"
         in_postcmd=true
       elif [[ "$in_postcmd" == true ]]; then
         postcmd+="$line"
       fi
       if [[ "$in_postcmd" == true ]]; then
-        if [[ "$postcmd" =~ \\$ ]]; then
+        echo "DEBUG postcmd so far: [$postcmd]"
+        if [[ "$postcmd" == *'\' ]]; then
+          echo "DEBUG ends with backslash"
           # Strip trailing backslash (line continuation)
           postcmd="${postcmd%\\}"
         else
+          echo "DEBUG no backslash, breaking"
           break
         fi
       fi
     done < "$config_file"
     postcmd="${postcmd#"${postcmd%%[![:space:]]*}"}"
+    echo "DEBUG final postcmd: [$postcmd]"
     if [[ -n "$postcmd" ]]; then
       gum spin --spinner dot --title "Running postcmd..." -- bash -c "$postcmd"
     fi
