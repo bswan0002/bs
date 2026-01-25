@@ -71,6 +71,8 @@ _bs_new() {
   if [[ "$branch_exists_on_origin" == false && -z "$base_branch" ]]; then
     local branches
     branches="$(git -C "$source_root" branch -r --format='%(refname:short)' | sed 's|^origin/||' | grep -v '^HEAD$')"
+    # Put main/master first
+    branches="$(echo "$branches" | awk '/^(main|master)$/ {print; next} {other[NR]=$0} END {for(i in other) print other[i]}')"
 
     base_branch="$(echo "$branches" | gum filter --height=15 --placeholder="Type to filter..." --header="Select base branch:")"
 
