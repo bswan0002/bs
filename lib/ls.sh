@@ -153,10 +153,11 @@ _bs_pick() {
     return 0
   fi
 
-  # Run gum filter with styled header
+  # Run gum filter with styled header (2-space prefix aligns with gum's bullet indent)
+  local header="  $(printf '%-28s  %-18s  %-5s  %s' 'BRANCH' 'DESCRIPTION' 'AGE' 'STATUS')"
   selected="$(echo "$options" | cut -d'|' -f1 | gum filter \
     --height=15 \
-    --header="BRANCH                        DESCRIPTION         AGE    STATUS" \
+    --header="$header" \
     --placeholder="Type to search..." \
     --indicator.foreground="212")"
 
