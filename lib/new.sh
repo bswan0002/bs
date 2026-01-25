@@ -54,8 +54,7 @@ _bs_new() {
   fi
 
   # Fetch latest from origin
-  echo "Fetching from origin..."
-  git -C "$source_root" fetch --quiet origin
+  gum spin --spinner dot --title "Fetching from origin..." -- git -C "$source_root" fetch --quiet origin
 
   # Check if branch already exists on origin
   local branch_exists_on_origin=false
@@ -95,10 +94,8 @@ _bs_new() {
   local clone_path; clone_path="$(_bs_clone_path "$repo_name" "$branch")"
   mkdir -p "$(dirname "$clone_path")"
 
-  echo "Creating branch space at $clone_path..."
-
   # Clone using reference for speed
-  if ! git clone --quiet --reference "$source_root" "$repo_url" "$clone_path"; then
+  if ! gum spin --spinner dot --title "Creating branch space at $clone_path..." -- git clone --quiet --reference "$source_root" "$repo_url" "$clone_path"; then
     echo "Error: clone failed"
     return 1
   fi
@@ -157,8 +154,7 @@ _bs_new() {
     local postcmd; postcmd="$(grep -E '^postcmd[[:space:]]*=' "$config_file" | head -1 | cut -d'=' -f2-)"
     postcmd="${postcmd#"${postcmd%%[![:space:]]*}"}"
     if [[ -n "$postcmd" ]]; then
-      echo "Running postcmd: $postcmd"
-      eval "$postcmd"
+      gum spin --spinner dot --title "Running: $postcmd" -- bash -c "$postcmd"
     fi
   fi
 

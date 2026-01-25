@@ -64,7 +64,7 @@ _bs_rm() {
   # Remove clone and metadata
   cd "$target_dir" || cd "$HOME"
 
-  rm -rf "$clone_path"
+  gum spin --spinner dot --title "Removing branch space..." -- rm -rf "$clone_path"
   _bs_delete_branch_meta "$repo" "$(_bs_unsanitize_branch "$branch")"
 
   echo "Removed branch space '$branch'"

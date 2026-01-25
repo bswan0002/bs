@@ -18,11 +18,10 @@ _bs_gc() {
     return 1
   fi
 
-  echo "Checking branch spaces for $repo..."
-  echo ""
-
   # Fetch latest from origin
-  git -C "$source" fetch --quiet origin
+  gum spin --spinner dot --title "Checking branch spaces for $repo..." -- git -C "$source" fetch --quiet origin
+
+  echo ""
 
   local candidates=()
   local candidate_reasons=()
