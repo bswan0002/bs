@@ -54,7 +54,7 @@ _bs_new() {
   fi
 
   # Fetch latest from origin
-  gum spin --spinner dot --title "Fetching from origin..." -- git -C "$source_root" fetch --quiet origin
+  gum spin --spinner dot --title "Fetching from origin..." -- git -C "$source_root" fetch --quiet --prune origin
 
   # Check if branch already exists on origin
   local branch_exists_on_origin=false
