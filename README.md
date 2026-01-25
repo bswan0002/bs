@@ -7,6 +7,7 @@ A CLI tool for managing isolated git clones ("branch spaces") for parallel devel
 When working on multiple features simultaneously—especially with AI agents that each need their own working directory—git worktrees aren't enough. You want truly isolated environments with their own `node_modules`, `.env` files, build artifacts, etc.
 
 `bs` manages these isolated clones:
+
 - Stores them in a hidden location (`~/.bs/`) to keep your dev directory clean
 - Tracks metadata like descriptions (useful for Jira ticket branches like `CLDYFE-1234`)
 - Provides quick navigation between branch spaces
@@ -23,6 +24,7 @@ source ~/dev/bs/bs.sh
 ```
 
 Dependencies:
+
 - `gum` — required for interactive selection and prompts (https://github.com/charmbracelet/gum)
 
 ## Usage
@@ -40,7 +42,7 @@ Select "[+] Create new branch..." at the bottom to create a new branch space.
 ### Create a branch space
 
 ```bash
-bs new CLDYFE-1234              # Create from current branch (picker for base)
+bs new CLDYFE-1234              # Prompts to pick a base branch
 bs new CLDYFE-1234 main         # Create from specific base branch
 ```
 
@@ -90,10 +92,11 @@ copy = .env
 copy = .claude
 
 # Run command after clone
-postcmd = yarn install
+postcmd = bun install
 ```
 
 When creating a new branch space, `bs` looks for `.bsconfig` in this order:
+
 1. The base branch space (if branching off a local branch space)
 2. The main project repo
 

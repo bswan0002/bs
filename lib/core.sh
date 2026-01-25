@@ -76,11 +76,6 @@ _bs_detect_context() {
   BS_SOURCE="$(git rev-parse --show-toplevel)"
 }
 
-# Get current git branch
-_bs_current_branch() {
-  git rev-parse --abbrev-ref HEAD 2>/dev/null
-}
-
 # Read project metadata
 _bs_get_project_meta() {
   local repo="$1"

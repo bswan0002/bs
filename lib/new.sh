@@ -63,9 +63,6 @@ _bs_new() {
     echo "Branch '$branch' exists on origin"
   fi
 
-  # Get current branch as default for base selection
-  local current_branch; current_branch="$(_bs_current_branch)"
-
   # Select base branch if needed and not provided
   if [[ "$branch_exists_on_origin" == false && -z "$base_branch" ]]; then
     local branches
