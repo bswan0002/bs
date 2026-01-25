@@ -93,6 +93,12 @@ copy = .claude
 postcmd = yarn install
 ```
 
+When creating a new branch space, `bs` looks for `.bsconfig` in this order:
+1. The base branch space (if branching off a local branch space)
+2. The main project repo
+
+Files specified with `copy` are also copied from the same location as the `.bsconfig`. This means if you've customized `.env` in a branch space and then branch off it, those customizations carry forward to the new branch space.
+
 ## Storage structure
 
 ```
