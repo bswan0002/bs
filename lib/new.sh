@@ -170,7 +170,7 @@ _bs_new() {
     done < "$config_file"
     postcmd="${postcmd#"${postcmd%%[![:space:]]*}"}"
     if [[ -n "$postcmd" ]]; then
-      gum spin --spinner dot --title "Running postcmd..." -- bash <<< "$postcmd"
+      eval "$postcmd"
     fi
   fi
 
