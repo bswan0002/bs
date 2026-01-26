@@ -109,9 +109,8 @@ _bs_gc() {
   for branch in "${candidates[@]}"; do
     local clone_path="$(_bs_clone_path "$repo" "$branch")"
 
-    rm -rf "$clone_path"
+    gum spin --spinner dot --title "Removing $branch..." -- rm -rf "$clone_path"
     _bs_delete_branch_meta "$repo" "$branch"
-    echo "Removed: $branch"
   done
 
   echo ""
