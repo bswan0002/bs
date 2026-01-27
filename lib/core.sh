@@ -1,13 +1,116 @@
 # core.sh — shared utilities for bs
 
-BS_ROOT="${HOME}/.bs"
-BS_CLONES="${BS_ROOT}/clones"
-BS_META="${BS_ROOT}/meta"
+# XDG-compliant paths with defaults
+BS_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/bs"
+BS_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/bs"
+BS_CONFIG_FILE="$BS_CONFIG_HOME/config"
+BS_META="$BS_DATA_HOME/meta"
+
+# BS_CLONES is loaded from config (will be set by _bs_load_config or _bs_ensure_dirs)
+BS_CLONES=""
+
+# Read a value from config file
+_bs_config_get() {
+  local key="$1"
+  [[ -f "$BS_CONFIG_FILE" ]] || return 1
+  grep "^${key}[[:space:]]*=" "$BS_CONFIG_FILE" 2>/dev/null | head -1 | cut -d'=' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'
+}
+
+# Write a value to config file
+_bs_config_set() {
+  local key="$1" value="$2"
+  mkdir -p "$BS_CONFIG_HOME"
+  if [[ -f "$BS_CONFIG_FILE" ]] && grep -q "^${key}[[:space:]]*=" "$BS_CONFIG_FILE" 2>/dev/null; then
+    local tmp; tmp=$(mktemp)
+    sed "s|^${key}[[:space:]]*=.*|${key} = ${value}|" "$BS_CONFIG_FILE" > "$tmp"
+    mv "$tmp" "$BS_CONFIG_FILE"
+  else
+    echo "${key} = ${value}" >> "$BS_CONFIG_FILE"
+  fi
+}
+
+# Load config at source time if it exists
+_bs_load_config() {
+  if [[ -f "$BS_CONFIG_FILE" ]]; then
+    BS_CLONES="$(_bs_config_get clones_dir)"
+  fi
+}
+
+# First-run setup: prompt for clones directory
+_bs_first_run_setup() {
+  # Compute smart default based on context
+  local default_path
+  if git rev-parse --git-dir &>/dev/null; then
+    # Inside a git repo - suggest ../clones (sibling directory)
+    default_path="$(cd .. && pwd)/clones"
+  else
+    # Not in a git repo - suggest ./clones (subdirectory)
+    default_path="$(pwd)/clones"
+  fi
+
+  gum style --bold "Welcome to bs (Branch Space Manager)"
+  echo "bs needs a directory to store branch space clones."
+  echo "This should NOT be a hidden (dot) directory for best compatibility."
+  echo
+
+  local clones_dir
+  clones_dir=$(gum input --placeholder "Path for clones" --value "$default_path")
+
+  # Handle empty input (user cancelled)
+  if [[ -z "$clones_dir" ]]; then
+    echo "Setup cancelled."
+    return 1
+  fi
+
+  # Expand ~ and make absolute
+  clones_dir="${clones_dir/#\~/$HOME}"
+  [[ "$clones_dir" != /* ]] && clones_dir="$(pwd)/$clones_dir"
+
+  _bs_config_set "clones_dir" "$clones_dir"
+  BS_CLONES="$clones_dir"
+  echo "Saved clones directory: $clones_dir"
+  echo
+  echo "Use 'bs new <branch>' from within a git repository to create your first branch space."
+}
 
 # Ensure storage directories exist
 _bs_ensure_dirs() {
+  # Ensure config exists (run first-time setup if needed)
+  if [[ ! -f "$BS_CONFIG_FILE" ]]; then
+    _bs_first_run_setup || return 1
+  fi
+
+  # Load clones directory from config if not already set
+  if [[ -z "$BS_CLONES" ]]; then
+    BS_CLONES="$(_bs_config_get clones_dir)"
+  fi
+
+  if [[ -z "$BS_CLONES" ]]; then
+    echo "Error: clones_dir not set in config. Delete $BS_CONFIG_FILE and run 'bs' to reconfigure." >&2
+    return 1
+  fi
+
   mkdir -p "$BS_CLONES" "$BS_META"
 }
+
+# Ensure config exists, running first-time setup if needed
+# Returns: 0 = config existed, 1 = error, 2 = first-run setup completed
+_bs_ensure_config() {
+  local first_run=0
+  if [[ ! -f "$BS_CONFIG_FILE" ]]; then
+    _bs_first_run_setup || return 1
+    first_run=1
+  fi
+  if [[ -z "$BS_CLONES" ]]; then
+    BS_CLONES="$(_bs_config_get clones_dir)"
+  fi
+  [[ -z "$BS_CLONES" ]] && return 1
+  ((first_run)) && return 2
+  return 0
+}
+
+# Load config on source
+_bs_load_config
 
 # Sanitize branch name for filesystem (/ -> --)
 _bs_sanitize_branch() {

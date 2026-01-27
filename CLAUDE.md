@@ -27,18 +27,23 @@ zsh -n lib/<file>.sh   # Syntax check a shell file
 - `lib/gc.sh` — `bs gc` garbage collection
 - `lib/desc.sh` — `bs desc` description management
 
-### Storage Layout
+### Storage Layout (XDG-compliant)
 ```
-~/.bs/
-  clones/<repo>/<repo>-<branch>/   # Actual git clones
+~/.config/bs/
+  config                            # Global config (clones_dir = /path/to/clones)
+
+~/.local/share/bs/
   meta/<repo>/
     _project.json                   # { "source": "/path/to/main/repo", "registered": "..." }
     <branch>.json                   # { "desc": "...", "base": "main", "created": "..." }
+
+<clones_dir>/                       # User-configured, NOT in a dotdirectory
+  <repo>/<repo>-<branch>/           # Actual git clones
 ```
 
 ### Key Patterns
 
-**Context Detection** (`_bs_detect_context`): Determines execution context by checking cwd against `~/.bs/clones/`. Sets `BS_CONTEXT` to `main`, `clone`, `unmanaged`, or `none`.
+**Context Detection** (`_bs_detect_context`): Determines execution context by checking cwd against `$BS_CLONES` (loaded from config). Sets `BS_CONTEXT` to `main`, `clone`, `unmanaged`, or `none`.
 
 **Branch Name Sanitization**: Forward slashes in branch names become `--` in filesystem paths (`feature/foo` → `feature--foo`). Use `_bs_sanitize_branch` / `_bs_unsanitize_branch`.
 
@@ -54,7 +59,14 @@ zsh -n lib/<file>.sh   # Syntax check a shell file
 
 ## Configuration
 
-`.bsconfig` in repo root configures new branch space setup:
+### Global Config (`~/.config/bs/config`)
+On first run, bs prompts for the clones directory location. Config uses simple key=value format:
+```
+clones_dir = ~/Dev/clones
+```
+
+### Project Config (`.bsconfig` in repo root)
+Configures new branch space setup:
 ```
 copy = .env              # Copy files/dirs from main repo
 copy = .claude

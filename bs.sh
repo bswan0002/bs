@@ -40,6 +40,17 @@ bs() {
   fi
 
   local cmd="${1:-}"
+  local first_run=0
+
+  # Ensure config exists (except for help commands)
+  # Returns: 0 = existed, 1 = error, 2 = first-run completed
+  if [[ "$cmd" != "help" && "$cmd" != "--help" && "$cmd" != "-h" ]]; then
+    _bs_ensure_config
+    case $? in
+      1) return 1 ;;
+      2) first_run=1 ;;
+    esac
+  fi
 
   case "$cmd" in
     new)
@@ -76,6 +87,8 @@ bs() {
       _bs_help
       ;;
     "")
+      # Skip picker if this was first-run setup (already showed guidance)
+      ((first_run)) && return 0
       _bs_pick
       ;;
     *)
@@ -104,10 +117,11 @@ with its own node_modules, .env, etc. Unlike git worktrees, these
 are fully independent.
 
 Storage:
-  ~/.bs/clones/<repo>/<branch>/   Actual git clones
-  ~/.bs/meta/<repo>/<branch>.json Metadata (description, base, created)
+  <clones_dir>/<repo>/<branch>/                 Actual git clones (user-configured)
+  ~/.local/share/bs/meta/<repo>/<branch>.json   Metadata (description, base, created)
+  ~/.config/bs/config                           Configuration (clones_dir)
 
-Configuration:
+Project Configuration:
   Place a .bsconfig file in your repo root to configure copy and post commands:
 
     copy = .env
