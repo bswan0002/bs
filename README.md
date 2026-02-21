@@ -35,7 +35,7 @@ Dependencies:
 bs              # Pick a branch space to cd into
 ```
 
-When run from within a project, shows branch spaces for that project. Otherwise, shows all projects first.
+When run from within a project, shows branch spaces for that project. Otherwise, shows all projects first. Test.
 
 Select "[+] Create new branch..." at the bottom to create a new branch space.
 
